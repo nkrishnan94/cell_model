@@ -14,16 +14,16 @@
 
 
 
-const int xdim = 220; //x length of simulation in microns
-const int ydim = 220; //y length of simulation in microns
-const int zdim = 220; //z length of simulation in microns
+const int xdim = 160; //x length of simulation in microns
+const int ydim = 160; //y length of simulation in microns
+const int zdim = 160; //z length of simulation in microns
 
 //long int cell_max = int(xdim * ydim * zdim); //max nummber ofcells allowed assuming near denset packing
 
 
 const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius
 
-unsigned int tStop = 50;
+unsigned int tStop = 100;
 float dt =2;
 
 
@@ -35,13 +35,17 @@ float K= 2.2*pow(10,-8);
 float s_b = 0.08;
 float fric = 0.4*pow(10,-6);
 float Dc = 0.01;
+float delc = 2*a*R;
+float deld =1.4*2*a*R;
+float delca = 1*a*R;
+float delda=1.8*a*R;
 
 
 const int cell_num  = 1000;
 int xcells = 10;
 int zcells = 10;
 int ycells= 10;
-int record_time =int(10/dt);
+int record_time =int(20/dt);
 
 
 
@@ -62,9 +66,9 @@ int main(){
 	}*/
 	default_random_engine generator;
 	normal_distribution<double> distribution(0,1);
-	int record_time = 10;
+
 	long double cells[cell_num][param_N] = {0}; //array containing centers, radius
-	long double forces[cell_num][3] = {0}; 
+	
 	long double x_space =  double(xdim)/double(xcells+1);
 	long double y_space =  double(ydim)/double(ycells+1);
 	long double z_space = double(zdim)/double(zcells+1);
@@ -108,8 +112,8 @@ int main(){
 	fprof.open("prof_init_" + date_time.str()+"_.txt");
 
  
-	//establish radii
-	/*for(int n=0;n<10;n++){
+	/*establish radii
+	for(int n=0;n<10;n++){
 		int cell_ind[cell_num] ={0};
 		for(int i = 0; i <cell_num; i++){
 			cell_ind[i] =i;
@@ -137,7 +141,7 @@ int main(){
 	    	cells[i][3] = (double(min_dist)/2)/double(a);
 
 		}
-	}
+	}*/
 
 	for(int i = 0; i < cell_num; i++){
 
@@ -145,43 +149,79 @@ int main(){
 
 		fprof <<setprecision(8)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<endl;
 
-	}*/
+	}
 
 
 
 	for(int t =0;t<int(tStop/dt);t++){
-		
 
+		//refresh force vector
+		long double forces[cell_num][3] = {0}; 
+		//cout<<forces[0][0]<<endl;
+		
+		//shuffle cells
 		int cell_ind[cell_num] ={0};
 		for(int i = 0; i <cell_num; i++){
 			cell_ind[i] =i;
 		}
 		random_shuffle(cell_ind, cell_ind + cell_num);
 
+
+		//solve for equation for every pair ij
 	    for(int i = 0; i <cell_num; i++){
 	    	int ind = cell_ind[i];
-	    	for (int j =0; j <cell_num;j++){
+	    	for (int j =0; j <cell_num; j++){
 	    		if(ind!=j){
 	    			float dist=0;
 	    			for(int c=0; c<3;c++){
+	    				//cout <<cells[ind][c] <<", " <<cells[j][c]<<endl;
 	    				dist+=pow(cells[ind][c]-cells[j][c],2);
 	    			}
+	    			if(pow(dist,.5)<delc){
 
 
-	    			float xij = a*(cells[ind][3]+cells[j][3]) - pow(dist,.5);
-	    			float fij = K*xij*tanh(s_b*abs(xij));
-	    			for(int c=0; c<3;c++){
-	    				forces[ind][c]+= fij*(cells[ind][c]-cells[j][c]/pow(dist,.5));
+		    			float xij = a*(cells[ind][3]+cells[j][3]) - pow(dist,.5);
+		    			//cout<<xij<<endl;
+
+		    			float fij = K*xij*tanh(s_b*abs(xij));
+
+		    			for(int c=0; c<3;c++){
+		    				forces[ind][c] += fij * (( cells[ind][c]-cells[j][c]) /pow(dist,.5));
+		    				
+		    			}	
 	    			}
+
+	    		}
+	    		if(ind==j){
+	    			if(cells[ind][2]<delca){
+	    				float xij = a*(cells[ind][3]) - cells[ind][2];
+	    				float fij = K*xij*tanh(s_b*abs(xij));
+
+	    				forces[ind][2] += fij;
+
+	    			} 
+
+
+	    			
 
 	    		}	    		
 
     		}
-    	}
 
+    	}
+    	//cout<<forces[0][0]<<endl;
+    	//cout<< dt*forces[0][0]/fric + pow(2*Dc*dt,.5)*distribution(generator)<<endl;
+    	//cout<< cells[0][0] <<endl;
+
+    	
 		for(int i = 0; i <cell_num; i++){
+			//cout<<i<<endl;
 			for(int c=0; c<3;c++){
-	    		cells[i][c] = cells[i][c] + dt*forces[i][c]/fric +2*Dc*dt + distribution(generator);
+				
+				
+
+	    		cells[i][c] = cells[i][c] + dt*forces[i][c]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+
 			}
 
 		}
@@ -197,16 +237,16 @@ int main(){
 
 
 
-	    if (t % record_time){
+	    if ((t % record_time)==0){
 			ostringstream strT;
-			strT << t;
+			strT << int(t*dt);
 
 			string proftName = "prof_T_" + strT.str() + "_"+ date_time.str() + ".txt";
 			ofstream fproft;
 		    fproft.open(proftName);
 		    for(int i = 0; i <cell_num; i++){
 
-	    		fproft <<setprecision(8)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<endl;
+	    		fproft<< setprecision(3)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<endl;
 
 
 		    	
