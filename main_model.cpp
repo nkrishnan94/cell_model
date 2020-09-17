@@ -14,16 +14,18 @@
 
 
 
-const int xdim = 160; //x length of simulation in microns
-const int ydim = 160; //y length of simulation in microns
-const int zdim = 160; //z length of simulation in microns
+const int xdim = 90; //x length of simulation in microns
+const int ydim = 500; //y length of simulation in microns
+const int zdim = 360; //z length of simulation in microns
+unsigned long CPD_flag = 1;
 
 //long int cell_max = int(xdim * ydim * zdim); //max nummber ofcells allowed assuming near denset packing
 
 
 const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius
 
-unsigned int tStop = 100;
+unsigned int tStop = 200;
+unsigned int CPD_time = 400;
 float dt =2;
 
 
@@ -41,10 +43,10 @@ float delca = 1*a*R;
 float delda=1.8*a*R;
 
 
-const int cell_num  = 1000;
-int xcells = 10;
-int zcells = 10;
-int ycells= 10;
+const int cell_num  = 4608;
+int xcells = 6;
+int ycells = 32;
+int zcells= 24;
 int record_time =int(20/dt);
 
 
@@ -157,48 +159,34 @@ int main(){
 
 		//refresh force vector
 		long double forces[cell_num][3] = {0}; 
-		//cout<<forces[0][0]<<endl;
-		
-		//shuffle cells
-		int cell_ind[cell_num] ={0};
-		for(int i = 0; i <cell_num; i++){
-			cell_ind[i] =i;
-		}
-		random_shuffle(cell_ind, cell_ind + cell_num);
 
-
-		//solve for equation for every pair ij
 	    for(int i = 0; i <cell_num; i++){
-	    	int ind = cell_ind[i];
+	    	//int ind = cell_ind[i];
 	    	for (int j =0; j <cell_num; j++){
-	    		if(ind!=j){
+	    		if(i!=j){
 	    			float dist=0;
 	    			for(int c=0; c<3;c++){
 	    				//cout <<cells[ind][c] <<", " <<cells[j][c]<<endl;
-	    				dist+=pow(cells[ind][c]-cells[j][c],2);
+	    				dist+=pow(cells[i][c]-cells[j][c],2);
 	    			}
 	    			if(pow(dist,.5)<delc){
 
-
-		    			float xij = a*(cells[ind][3]+cells[j][3]) - pow(dist,.5);
-		    			//cout<<xij<<endl;
+		    			float xij = a*(cells[i][3]+cells[j][3]) - pow(dist,.5);
 
 		    			float fij = K*xij*tanh(s_b*abs(xij));
 
 		    			for(int c=0; c<3;c++){
-		    				forces[ind][c] += fij * (( cells[ind][c]-cells[j][c]) /pow(dist,.5));
+		    				forces[i][c] += fij * (( cells[i][c]-cells[j][c]) /pow(dist,.5));
 		    				
 		    			}	
 	    			}
 
 	    		}
-	    		if(ind==j){
-	    			if(cells[ind][2]<delca){
-	    				float xij = a*(cells[ind][3]) - cells[ind][2];
+	    		if(i==j){
+	    			if(cells[i][2]<delca){
+	    				float xij = a*(cells[i][3]) - cells[i][2];
 	    				float fij = K*xij*tanh(s_b*abs(xij));
-
-	    				forces[ind][2] += fij;
-
+	    				forces[i][2] += fij;
 	    			} 
 
 
@@ -215,16 +203,45 @@ int main(){
 
     	
 		for(int i = 0; i <cell_num; i++){
-			//cout<<i<<endl;
-			for(int c=0; c<3;c++){
-				
-				
 
-	    		cells[i][c] = cells[i][c] + dt*forces[i][c]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+			//cout<<i<<endl;
+			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) < 0 ){
+				cells[i][0] = xdim + cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+
+			}
+			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) >xdim){
+				cells[i][0] = cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator)-xdim;
 
 			}
 
+			if(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) <(a*R)){
+				cells[i][1] = a*R;
+
+			}
+
+			if(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)+a*R >ydim){
+				cells[i][1] = cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)-int(R/2);
+
+			}
+
+
+			
+			
+				
+    		cells[i][2] = cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+
+			
+
+
 		}
+
+		
+			
+		
+		
+
+		
+		
 
 
 
@@ -247,12 +264,23 @@ int main(){
 		    for(int i = 0; i <cell_num; i++){
 
 	    		fproft<< setprecision(3)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<endl;
-
-
 		    	
 			}
 
 	    }
+
+	    if ((t % int(CPD_time*dt) )==0){
+	    	if (CPD_flag==1){
+			    for(int i = 0; i <cell_num; i++){
+			    	if((cells[i][1]>int(ydim/2)-100)&&(cells[i][1]<int(ydim/2)+100) &&(cells[i][2] <36)){
+			    		cells[i][3] = 0;
+			    	}
+			    }
+	    	}
+
+	    }
+
+
     }
 
     clock_t c_fin = clock();
