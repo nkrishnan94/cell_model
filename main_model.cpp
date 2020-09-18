@@ -15,8 +15,8 @@
 
 
 const int xdim = 90; //x length of simulation in microns
-const int ydim = 500; //y length of simulation in microns
-const int zdim = 360; //z length of simulation in microns
+const int ydim = 720; //y length of simulation in microns
+const int zdim = 240; //z length of simulation in microns
 unsigned long CPD_flag = 1;
 
 //long int cell_max = int(xdim * ydim * zdim); //max nummber ofcells allowed assuming near denset packing
@@ -24,9 +24,9 @@ unsigned long CPD_flag = 1;
 
 const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius
 
-unsigned int tStop = 200;
+unsigned int tStop = 10000;
 unsigned int CPD_time = 400;
-float dt =2;
+float dt =4;
 
 
 
@@ -43,11 +43,11 @@ float delca = 1*a*R;
 float delda=1.8*a*R;
 
 
-const int cell_num  = 4608;
+const int cell_num  = 3072;
 int xcells = 6;
-int ycells = 32;
-int zcells= 24;
-int record_time =int(20/dt);
+int ycells = 48;
+int zcells= 16;
+int record_time =int(100/dt);
 
 
 
@@ -111,7 +111,7 @@ int main(){
 	ostringstream date_time;
 	date_time << buffer;
 
-	fprof.open("prof_init_" + date_time.str()+"_.txt");
+	fprof.open("CPD/prof_init_" + date_time.str()+"_.txt");
 
  
 	/*establish radii
@@ -179,6 +179,8 @@ int main(){
 		    				forces[i][c] += fij * (( cells[i][c]-cells[j][c]) /pow(dist,.5));
 		    				
 		    			}	
+
+
 	    			}
 
 	    		}
@@ -223,15 +225,8 @@ int main(){
 				cells[i][1] = cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)-int(R/2);
 
 			}
-
-
-			
-			
 				
     		cells[i][2] = cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
-
-			
-
 
 		}
 
@@ -241,17 +236,6 @@ int main(){
 		
 
 		
-		
-
-
-
-
-
-
-
-
-
-
 
 
 	    if ((t % record_time)==0){
@@ -260,7 +244,7 @@ int main(){
 
 			string proftName = "prof_T_" + strT.str() + "_"+ date_time.str() + ".txt";
 			ofstream fproft;
-		    fproft.open(proftName);
+		    fproft.open("CPD/"+proftName);
 		    for(int i = 0; i <cell_num; i++){
 
 	    		fproft<< setprecision(3)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<endl;
@@ -272,7 +256,9 @@ int main(){
 	    if ((t % int(CPD_time*dt) )==0){
 	    	if (CPD_flag==1){
 			    for(int i = 0; i <cell_num; i++){
-			    	if((cells[i][1]>int(ydim/2)-100)&&(cells[i][1]<int(ydim/2)+100) &&(cells[i][2] <36)){
+			    	if( (cells[i][1]>int(ydim/2)-200)&&(cells[i][1]<int(ydim/2)+200) &&(cells[i][2] <(int(a*R)+32) )){
+
+			    		cells[i][2] =-10;
 			    		cells[i][3] = 0;
 			    	}
 			    }
