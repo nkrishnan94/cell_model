@@ -15,39 +15,39 @@
 
 
 const int xdim = 90; //x length of simulation in microns
-const int ydim = 720; //y length of simulation in microns
-const int zdim = 240; //z length of simulation in microns
+const int ydim = 1000; //y length of simulation in microns
+const int zdim = 150; //z length of simulation in microns
 unsigned long CPD_flag = 1;
 
 //long int cell_max = int(xdim * ydim * zdim); //max nummber ofcells allowed assuming near denset packing
 
+const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius, y force
 
-const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius
-
-unsigned int tStop = 10000;
-unsigned int CPD_time = 400;
-float dt =4;
+unsigned int tStop = 2000;
+unsigned int CPD_time = 0;
+float dt =2;
 
 
 
 //parameters:
-float R = 4.125;
-float a = 2.5;
-float K= 2.2*pow(10,-8);
-float s_b = 0.08;
-float fric = 0.4*pow(10,-6);
+float R = 4.125; //um
+float a = 2.5; //um
+float K= .088;//*pow(10,0); N/um
+float s_b = 1;
+
+float fric = 0.4;//*pow(10,-6); N sec. um
 float Dc = 0.01;
-float delc = 2*a*R;
-float deld =1.4*2*a*R;
-float delca = 1*a*R;
-float delda=1.8*a*R;
+float delc = 1.4*a*R; //um
+float deld =1.4*2*a*R; //um 
+float delca = 1*a*R; //um
+float delda=1.8*a*R; //um
 
 
-const int cell_num  = 3072;
-int xcells = 6;
-int ycells = 48;
-int zcells= 16;
-int record_time =int(100/dt);
+const int cell_num  = 13500;
+int xcells = 9;
+int ycells = 100;
+int zcells= 15;
+int record_time =int(10/dt);
 
 
 
@@ -71,9 +71,9 @@ int main(){
 
 	long double cells[cell_num][param_N] = {0}; //array containing centers, radius
 	
-	long double x_space =  double(xdim)/double(xcells+1);
-	long double y_space =  double(ydim)/double(ycells+1);
-	long double z_space = double(zdim)/double(zcells+1);
+	long double x_space =  (double(xdim)-double(2*R))/double(xcells);
+	long double y_space =  (double(ydim)-double(2*R))/double(ycells);
+	long double z_space = (double(zdim)-double(2*R))/double(zcells);
 	//cout<<x_space<<endl;
 
 	int cell_count =0;
@@ -82,9 +82,9 @@ int main(){
 		for(int y =0; y<ycells;y++){
 			for(int x =0; x<xcells;x++){
 				if(cell_count<cell_num){
-					cells[cell_count][0]= double(.5*x_space+x*x_space);
-					cells[cell_count][1] = double(.5*y_space+y*y_space);
-					cells[cell_count][2]= double(.5*z_space+z*z_space);
+					cells[cell_count][0]= double(R+x*x_space);
+					cells[cell_count][1] = double(R+y*y_space);
+					cells[cell_count][2]= double(R+z*z_space);
 					cells[cell_count][3]= double(R);
 
 					cell_count+=1;
@@ -94,6 +94,18 @@ int main(){
 			}
 		}
 	}
+
+    for(int i = 0; i <cell_num; i++){
+    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <abs(int(ydim/2)-i)/8 ) ) {
+
+    		cells[i][2] =-30;
+    		cells[i][3] = 0;
+    	}
+    }
+
+
+  
+
 	ofstream fprof;
 	time_t time_start;
 	clock_t c_init = clock();
@@ -156,6 +168,7 @@ int main(){
 
 
 	for(int t =0;t<int(tStop/dt);t++){
+		cout <<t<<endl;
 
 		//refresh force vector
 		long double forces[cell_num][3] = {0}; 
@@ -172,11 +185,12 @@ int main(){
 	    			if(pow(dist,.5)<delc){
 
 		    			float xij = a*(cells[i][3]+cells[j][3]) - pow(dist,.5);
+		    			int sign = xij/abs(xij);
 
 		    			float fij = K*xij*tanh(s_b*abs(xij));
 
 		    			for(int c=0; c<3;c++){
-		    				forces[i][c] += fij * (( cells[i][c]-cells[j][c]) /pow(dist,.5));
+		    				forces[i][c] += fij * sign*(( cells[i][c]-cells[j][c]) /pow(dist,.5));
 		    				
 		    			}	
 
@@ -216,13 +230,13 @@ int main(){
 
 			}
 
-			if(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) <(a*R)){
-				cells[i][1] = a*R;
+			if(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) <(R)){
+				cells[i][1] = R+abs(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) );
 
 			}
 
-			if(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)+a*R >ydim){
-				cells[i][1] = cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)-int(R/2);
+			if(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)+R >ydim){
+				cells[i][1] = cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator)-(a*R);
 
 			}
 				
@@ -230,9 +244,6 @@ int main(){
 
 		}
 
-		
-			
-		
 		
 
 		
@@ -243,29 +254,29 @@ int main(){
 			strT << int(t*dt);
 
 			string proftName = "prof_T_" + strT.str() + "_"+ date_time.str() + ".txt";
+			//string yforceName = "force_T_" + strT.str() + "_"+ date_time.str() + ".txt";
 			ofstream fproft;
 		    fproft.open("CPD/"+proftName);
 		    for(int i = 0; i <cell_num; i++){
 
-	    		fproft<< setprecision(3)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<endl;
+	    		fproft<< setprecision(11)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<", " << forces[i][0]<< ", "<<forces[i][1]<< ", "<<forces[i][2]<< endl;
 		    	
 			}
 
 	    }
 
-	    if ((t % int(CPD_time*dt) )==0){
+	    /*if (t == int(CPD_time/dt) ){
 	    	if (CPD_flag==1){
 			    for(int i = 0; i <cell_num; i++){
-			    	if( (cells[i][1]>int(ydim/2)-200)&&(cells[i][1]<int(ydim/2)+200) &&(cells[i][2] <(int(a*R)+32) )){
+			    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <(int(a*R)+42+abs(int(ydim/2)-i)/4 ) )){
 
-			    		cells[i][2] =-10;
+			    		cells[i][2] =-30;
 			    		cells[i][3] = 0;
 			    	}
 			    }
 	    	}
 
-	    }
-
+	    }*/
 
     }
 
