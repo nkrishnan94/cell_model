@@ -14,9 +14,9 @@
 
 
 
-const int xdim = 90; //x length of simulation in microns
-const int ydim = 1000; //y length of simulation in microns
-const int zdim = 150; //z length of simulation in microns
+const double xdim = 90 *pow(10,-6); //x length of simulation in microns
+const double ydim = 1000*pow(10,-6); //y length of simulation in microns
+const double zdim = 150*pow(10,-6); //z length of simulation in microns
 unsigned long CPD_flag = 1;
 
 //long int cell_max = int(xdim * ydim * zdim); //max nummber ofcells allowed assuming near denset packing
@@ -30,13 +30,13 @@ float dt =2;
 
 
 //parameters:
-float R = 4.125; //um
+float R = 4.125*pow(10,-6); //um
 float a = 2.5; //um
-float K= .088;//*pow(10,0); N/um
+float K= 2.2*pow(10,-8);//*pow(10,0); N/um
 float s_b = 1;
 
-float fric = 0.4;//*pow(10,-6); N sec. um
-float Dc = 0.01;
+float fric = 0.4*pow(10,-6); //N sec. um
+float Dc = 0.01*pow(10,-6);
 float delc = 1.4*a*R; //um
 float deld =1.4*2*a*R; //um 
 float delca = 1*a*R; //um
@@ -86,6 +86,7 @@ int main(){
 					cells[cell_count][1] = double(R+y*y_space);
 					cells[cell_count][2]= double(R+z*z_space);
 					cells[cell_count][3]= double(R);
+					//cout << zdim<<endl;
 
 					cell_count+=1;
 
@@ -96,9 +97,9 @@ int main(){
 	}
 
     for(int i = 0; i <cell_num; i++){
-    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <abs(int(ydim/2)-i)/8 ) ) {
+    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <42*pow(10,-6) ) ){
 
-    		cells[i][2] =-30;
+    		cells[i][2] =-30*pow(10,-6);
     		cells[i][3] = 0;
     	}
     }
@@ -259,24 +260,24 @@ int main(){
 		    fproft.open("CPD/"+proftName);
 		    for(int i = 0; i <cell_num; i++){
 
-	    		fproft<< setprecision(11)<< fixed << i << ", " << cells[i][0] << ", " << cells[i][1] << ", " << cells[i][2] <<", " << cells[i][3]<<", " << forces[i][0]<< ", "<<forces[i][1]<< ", "<<forces[i][2]<< endl;
+	    		fproft<< setprecision(11)<< fixed << i << ", " << cells[i][0]/pow(10,-6) << ", " << cells[i][1]/pow(10,-6) << ", " << cells[i][2]/pow(10,-6) <<", " << cells[i][3]/pow(10,-6)<<", " << forces[i][0]/pow(10,-6)<< ", "<<forces[i][1]/pow(10,-6)<< ", "<<forces[i][2]/pow(10,-6)<< endl;
 		    	
 			}
 
 	    }
 
-	    /*if (t == int(CPD_time/dt) ){
+	    if (t == int(CPD_time/dt) ){
 	    	if (CPD_flag==1){
 			    for(int i = 0; i <cell_num; i++){
-			    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <(int(a*R)+42+abs(int(ydim/2)-i)/4 ) )){
+			    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <int(a*R)+42*pow(10,-6) )) {
 
-			    		cells[i][2] =-30;
+			    		cells[i][2] =-30*pow(10,-6);
 			    		cells[i][3] = 0;
 			    	}
 			    }
 	    	}
 
-	    }*/
+	    }
 
     }
 
