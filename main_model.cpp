@@ -32,12 +32,12 @@ float dt =2;
 //parameters:
 float R = 4.125*pow(10,-6); //um
 float a = 2.5; //um
-float K= 2.2*pow(10,-8);//*pow(10,0); N/um
+float K= .022*pow(10,-2);//*pow(10,0); N/um
 float s_b = 1;
 
 float fric = 0.4*pow(10,-6); //N sec. um
 float Dc = 0.01*pow(10,-6);
-float delc = 1.4*a*R; //um
+float delc = 1.4*2*a*R; //um
 float deld =1.4*2*a*R; //um 
 float delca = 1*a*R; //um
 float delda=1.8*a*R; //um
@@ -67,7 +67,7 @@ int main(){
 
 	}*/
 	default_random_engine generator;
-	normal_distribution<double> distribution(0,1);
+	normal_distribution<double> distribution(0,pow(10,-6));
 
 	long double cells[cell_num][param_N] = {0}; //array containing centers, radius
 	
@@ -96,18 +96,21 @@ int main(){
 		}
 	}
 
-    for(int i = 0; i <cell_num; i++){
-    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <42*pow(10,-6) ) ){
+	/*cells[0][0] = 3*pow(10,-6);
+	cells[0][1] = 400*pow(10,-6);
+	cells[0][2] = 40*pow(10,-6);
+	cells[0][3] = R;
 
-    		cells[i][2] =-30*pow(10,-6);
-    		cells[i][3] = 0;
-    	}
-    }
+	cells[1][0] = 3*pow(10,-6);
+	cells[1][1] =425*pow(10,-6);
+	cells[1][2] = 40*pow(10,-6);
+	cells[1][3] = R;*/
+
 
 
   
 
-	ofstream fprof;
+	ofstream fprof,fvels;
 	time_t time_start;
 	clock_t c_init = clock();
 	struct tm * timeinfo;
@@ -125,6 +128,8 @@ int main(){
 	date_time << buffer;
 
 	fprof.open("CPD/prof_init_" + date_time.str()+"_.txt");
+	fvels.open("CPD/vel_"+date_time.str()+"_.txt");
+	//vector <double> fvels;
 
  
 	/*establish radii
@@ -186,12 +191,12 @@ int main(){
 	    			if(pow(dist,.5)<delc){
 
 		    			float xij = a*(cells[i][3]+cells[j][3]) - pow(dist,.5);
-		    			int sign = xij/abs(xij);
+		    			//int sign = xij/abs(xij);
 
 		    			float fij = K*xij*tanh(s_b*abs(xij));
 
 		    			for(int c=0; c<3;c++){
-		    				forces[i][c] += fij * sign*(( cells[i][c]-cells[j][c]) /pow(dist,.5));
+		    				forces[i][c] += fij *(( cells[i][c]-cells[j][c]) /pow(dist,.5));
 		    				
 		    			}	
 
@@ -206,26 +211,37 @@ int main(){
 	    				forces[i][2] += fij;
 	    			} 
 
-
-	    			
-
 	    		}	    		
 
     		}
 
     	}
+
+    	//forces[cell_num][3] = {0}; 
     	//cout<<forces[0][0]<<endl;
     	//cout<< dt*forces[0][0]/fric + pow(2*Dc*dt,.5)*distribution(generator)<<endl;
     	//cout<< cells[0][0] <<endl;
 
+    	double x;
+    	double y;
+    	double z;
+    	double dx=0;
+    	int new_cell_num=0;
+
     	
 		for(int i = 0; i <cell_num; i++){
+			//cout<<pow(2*Dc*dt,.5)*distribution(generator)<<endl;
 
 			//cout<<i<<endl;
+			x = cells[i][0];
+			y = cells[i][1];
+			z = cells[i][2];
 			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) < 0 ){
 				cells[i][0] = xdim + cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator);
 
+
 			}
+			
 			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) >xdim){
 				cells[i][0] = cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator)-xdim;
 
@@ -242,8 +258,15 @@ int main(){
 			}
 				
     		cells[i][2] = cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+    		
+    		if(cells[i][2]>0){
+
+    			new_cell_num+=1;
+    			dx+= pow(pow(x-cells[i][0],2)+pow(y-cells[i][1],2)+pow(z-cells[i][2],2),.5); 
+    		}
 
 		}
+
 
 		
 
@@ -252,6 +275,7 @@ int main(){
 
 	    if ((t % record_time)==0){
 			ostringstream strT;
+		
 			strT << int(t*dt);
 
 			string proftName = "prof_T_" + strT.str() + "_"+ date_time.str() + ".txt";
@@ -261,15 +285,18 @@ int main(){
 		    for(int i = 0; i <cell_num; i++){
 
 	    		fproft<< setprecision(11)<< fixed << i << ", " << cells[i][0]/pow(10,-6) << ", " << cells[i][1]/pow(10,-6) << ", " << cells[i][2]/pow(10,-6) <<", " << cells[i][3]/pow(10,-6)<<", " << forces[i][0]/pow(10,-6)<< ", "<<forces[i][1]/pow(10,-6)<< ", "<<forces[i][2]/pow(10,-6)<< endl;
+	    		
 		    	
 			}
+			fvels << setprecision(11)<< t <<", "<< ((dx/new_cell_num)/dt)/pow(10,-6) << endl;
 
 	    }
 
 	    if (t == int(CPD_time/dt) ){
 	    	if (CPD_flag==1){
+
 			    for(int i = 0; i <cell_num; i++){
-			    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <int(a*R)+42*pow(10,-6) )) {
+			    	if( (cells[i][1]>ydim/2-300*pow(10,-6)) &&(cells[i][1]<ydim/2+300*pow(10,-6)) &&(cells[i][2] <42*pow(10,-6) ) ){
 
 			    		cells[i][2] =-30*pow(10,-6);
 			    		cells[i][3] = 0;
