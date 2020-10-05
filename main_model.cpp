@@ -32,9 +32,14 @@ float dt =2;
 //parameters:
 float R = 4.125*pow(10,-6); //um
 float a = 2.5; //um
+<<<<<<< HEAD
 
 float K= .022*pow(10,-2);//*pow(10,0); N/um
 float s_b = .2;
+=======
+float K= .022*pow(10,-2);//*pow(10,0); N/um
+float s_b = 1;
+>>>>>>> parent of 77e9070... two zone CDP
 
 
 float fric = 0.4*pow(10,-6); //N sec. um
@@ -45,10 +50,10 @@ float delca = 1*a*R; //um
 float delda=1.8*a*R; //um
 
 
-const int cell_num  = 5760;
-int xcells = 6;
-int ycells = 80;
-int zcells= 12;
+const int cell_num  = 13500;
+int xcells = 9;
+int ycells = 100;
+int zcells= 15;
 int record_time =int(10/dt);
 
 
@@ -208,7 +213,7 @@ int main(){
 	    				forces[i][2] += fij;
 	    			} 
 
-	    		}   		
+	    		}	    		
 
 
 	    			
@@ -233,19 +238,28 @@ int main(){
 			x = cells[i][0];
 			y = cells[i][1];
 			z = cells[i][2];
+<<<<<<< HEAD
 			
 
 			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) < 0 ){
+=======
+			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) < 0 ){
+				cells[i][0] = xdim + cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+>>>>>>> parent of 77e9070... two zone CDP
 
 				cells[i][0] = xdim + cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator);
 
 			}
 
 			
+<<<<<<< HEAD
 			
 
 			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) >xdim){
 
+=======
+			if(cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator) >xdim){
+>>>>>>> parent of 77e9070... two zone CDP
 				cells[i][0] = cells[i][0] + dt*forces[i][0]/fric + pow(2*Dc*dt,.5)*distribution(generator)-xdim;
 
 			}
@@ -288,9 +302,13 @@ int main(){
 	    if (t == int(CPD_time/dt) ){
 	    	if (CPD_flag==1){
 			    for(int i = 0; i <cell_num; i++){
+<<<<<<< HEAD
 
 			    	if( (cells[i][1]>int(ydim/2)-300)&&(cells[i][1]<int(ydim/2)+300) &&(cells[i][2] <int(a*R)+42*pow(10,-6) )) {
 
+=======
+			    	if( (cells[i][1]>ydim/2-300*pow(10,-6)) &&(cells[i][1]<ydim/2+300*pow(10,-6)) &&(cells[i][2] <42*pow(10,-6) ) ){
+>>>>>>> parent of 77e9070... two zone CDP
 
 			    		cells[i][2] =-30*pow(10,-6);
 			    		cells[i][3] = 0;
