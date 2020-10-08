@@ -15,7 +15,7 @@
 
 
 const double xdim = 90 *pow(10,-6); //x length of simulation in microns
-const double ydim = 1400*pow(10,-6); //y length of simulation in microns
+const double ydim = 1000*pow(10,-6); //y length of simulation in microns
 const double zdim = 150*pow(10,-6); //z length of simulation in microns
 unsigned long CPD_flag = 1;
 
@@ -23,7 +23,7 @@ unsigned long CPD_flag = 1;
 
 const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius, y force
 
-unsigned int tStop = 400;
+unsigned int tStop = 2000;
 unsigned int CPD_time = 0;
 float dt =2;
 
@@ -32,8 +32,13 @@ float dt =2;
 //parameters:
 float R = 4.125*pow(10,-6); //um
 float a = 2.5; //um
+<<<<<<< HEAD
 float K= .022;//*pow(10,0); N/um
 float s_b = .4;
+=======
+float K= .011*pow(10,-1);//*pow(10,0); N/um
+float s_b = .2;
+>>>>>>> parent of 47fef1a... updayte
 
 float fric = 0.4*pow(10,-6); //N sec. um
 float Dc = 0.01*pow(10,-6);
@@ -43,9 +48,9 @@ float delca = 1*a*R; //um
 float delda=1.8*a*R; //um
 
 
-const int cell_num  = 8640;
+const int cell_num  = 5760;
 int xcells = 6;
-int ycells = 120;
+int ycells = 80;
 int zcells= 12;
 int record_time =int(10/dt);
 
@@ -197,6 +202,11 @@ int main(){
 
     			}
 
+<<<<<<< HEAD
+=======
+		    			float xij = a*(cells[i][3]+cells[j][3]) - pow(dist,.5);
+		    			//int sign = xij/abs(xij);
+>>>>>>> parent of 47fef1a... updayte
 
     			if(i==j){
 	    			if(cells[i][2]<delca){
@@ -332,14 +342,7 @@ int main(){
 	    	if (CPD_flag==1){
 
 			    for(int i = 0; i <cell_num; i++){
-			    	if( (cells[i][1]>ydim/2-420*pow(10,-6)) &&(cells[i][1]<ydim/2-120*pow(10,-6))  &&(cells[i][2] <28*pow(10,-6) ) ){
-
-			    		cells[i][2] =-30*pow(10,-6);
-			    		cells[i][3] = 0;
-			    	}
-			    }
-			    for(int i = 0; i <cell_num; i++){
-			    	if( (cells[i][1]<ydim/2+420*pow(10,-6)) &&(cells[i][1]>ydim/2+120*pow(10,-6))  &&(cells[i][2] <28*pow(10,-6) ) ){
+			    	if( (cells[i][1]>ydim/2-200*pow(10,-6)) &&(cells[i][1]<ydim/2+200*pow(10,-6))  &&(cells[i][2] <42*pow(10,-6) ) ){
 
 			    		cells[i][2] =-30*pow(10,-6);
 			    		cells[i][3] = 0;
