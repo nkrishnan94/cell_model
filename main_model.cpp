@@ -33,12 +33,12 @@ float dt =2;
 float R = 4.125*pow(10,-6); //um
 float a = 2.5; //um
 float K= .022;//*pow(10,0); N/um
-float s_b = .2;
+float s_b = .4;
 
 float fric = 0.4*pow(10,-6); //N sec. um
 float Dc = 0.01*pow(10,-6);
 float delc = 1.4*2*a*R; //um
-float deld =1.4*2*a*R; //um 
+float deld =1.8*2*a*R; //um 
 float delca = 1*a*R; //um
 float delda=1.8*a*R; //um
 
@@ -70,6 +70,7 @@ int main(){
 	normal_distribution<double> distribution(0,pow(10,-6));
 
 	long double cells[cell_num][param_N] = {0}; //array containing centers, radius
+	long double bonds[cell_num][cell_num] = {0};
 	
 	long double x_space =  (double(xdim)-double(2*R))/double(xcells);
 	long double y_space =  (double(ydim)-double(2*R))/double(ycells);
@@ -177,8 +178,7 @@ int main(){
 		cout <<t<<endl;
 
 		//refresh force vector
-		long double forces[cell_num][3] = {0}; 
-
+		/*long double forces[cell_num][3] = {0};
 	    for(int i = 0; i <cell_num; i++){
 	    	//int ind = cell_ind[i];
 	    	for (int j =0; j <cell_num; j++){
@@ -189,33 +189,69 @@ int main(){
 	    				dist+=pow(cells[i][c]-cells[j][c],2);
 	    			}
 	    			if(pow(dist,.5)<delc){
+	    				bonds[i][j] =  1;
+    				}
+	    			if(pow(dist,.5)>deld){
+	    				bonds[i][j] =  0;
+    				}
 
-		    			float xij = a*(cells[i][3]+cells[j][3]) - pow(dist,.5);
-		    			int sign = -xij/abs(xij);
-
-		    			float fij = K*xij*tanh(s_b*abs(xij));
-
-		    			for(int c=0; c<3;c++){
-		    				forces[i][c] += fij *(( cells[i][c]-cells[j][c]) /pow(dist,.5));
-		    				
-		    			}	
+    			}
 
 
+    			if(i==j){
+	    			if(cells[i][2]<delca){
+	    				bonds[i][j] = 1;
+
+    				}
+    				if(cells[i][2]>delda){
+
+    					bonds[i][j] = 0;
+    				}
+
+    			}
+			}
+		}
+
+
+
+
+	    for(int i = 0; i <cell_num; i++){
+	    	//int ind = cell_ind[i];
+	    	for (int j =0; j <cell_num; j++){
+	    		if((i!=j)&&(bonds[i][j]==1)){
+
+	    			float dist=0;
+	    			for(int c=0; c<3;c++){
+	    				//cout <<cells[ind][c] <<", " <<cells[j][c]<<endl;
+	    				dist+=pow(cells[i][c]-cells[j][c],2);
 	    			}
 
+
+	    			float xij = a*(cells[i][3]+cells[j][3]) - pow(dist,.5);
+	    			int sign = -xij/abs(xij);
+
+	    			float fij = K*xij*tanh(s_b*abs(xij));
+
+	    			for(int c=0; c<3;c++){
+	    				forces[i][c] += fij *(( cells[i][c]-cells[j][c]) /pow(dist,.5));
+	    				
+	    			}	
+	    			 
+
 	    		}
-	    		if(i==j){
-	    			if(cells[i][2]<delca){
+
+	    		if((i==j)&&(bonds[i][j]==1)){
+
 	    				float xij = a*(cells[i][3]) - cells[i][2];
 	    				float fij = K*xij*tanh(s_b*abs(xij));
 	    				forces[i][2] += fij;
-	    			} 
+	    			
 
 	    		}   		
 
     		}
 
-    	}
+    	}*/
 
     	//forces[cell_num][3] = {0}; 
     	//cout<<forces[0][0]<<endl;
