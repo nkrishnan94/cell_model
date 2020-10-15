@@ -14,9 +14,9 @@
 
 
 
-const double xdim = 100 *pow(10,-6); //x length of simulation in microns
-const double ydim = 1400*pow(10,-6); //y length of simulation in microns
-const double zdim = 150*pow(10,-6); //z length of simulation in microns
+const double xdim = 100 *pow(10,-6); //x length of simulation in micron
+const double ydim = 2000*pow(10,-6); //y length of simulation in microns
+const double zdim = 100*pow(10,-6); //z length of simulation in microns
 unsigned long CPD_flag = 1;
 
 //long int cell_max = int(xdim * ydim * zdim); //max nummber ofcells allowed assuming near denset packing
@@ -24,36 +24,39 @@ unsigned long CPD_flag = 1;
 const int param_N = 4; // number of cell state parameters -> center x coordinate,center y coordinate,center z coordinate, radius, y force
 
 unsigned int tStop = 100000;
-unsigned int CPD_time = 500;
+unsigned int CPD_time = 0;
 float dt =2;
 
 
 
 //parameters:
-float R = 4.125*pow(10,-6); //um
+float R = 4.5*pow(10,-6); //um
 float a = 2.5; //um
-float K= 2.2*pow(10,-9);//*pow(10,0); N/um
+float Kc= 2.2*pow(10,-8);//*pow(10,0); N/um
+float Ka= 2.2*pow(10,-9);//*pow(10,0); N/um
 //float K= 2.2*pow(10,-10);//*pow(10,0); N/um
 
-float s_b = .1*pow(10,6);
+float s_c = 1*pow(10,6);
+
+float s_a = 1*pow(10,6);
 
 float fric = 0.4*pow(10,-6); //N sec. um
 //float Dc = 0.01*pow(10,-6);
-float Dc=.01*pow(10,-6);
-float delc = 1.4*2*a*R; //um
+float Dc=0.003;
+float delc = 1*2*a*R; //um
 float deld = 1.4*2*a*R; //um
-float delca = 1.8*a*R; //um
+float delca = 2*a*R; //um
 float delda=1.8*a*R; //um
-double vel_thresh = .1*pow(10,-6);
+double vel_thresh = .5*pow(10,-6);
 
 
 
 const int xcells = 1;
-const int ycells = 100;
-const int zcells=10;
+const int ycells = 160;
+const int zcells=1;
 const int cell_num  = int(xcells*ycells*zcells);
 //const int cell_num = 1;
-int record_time =int(10/dt);
+int record_time =int(50/dt);
 
 
 
@@ -73,13 +76,13 @@ int main(){
 
     }*/
     default_random_engine generator;
-    normal_distribution<double> distribution(0,1);
+    normal_distribution<double> distribution(0,1*pow(10,-6));
 
     long double cells[cell_num][param_N] = {0}; //array containing centers, radius
     //long double bonds[100][100] = {0};
     
     long double x_space =  (double(xdim)-double(2*a*R))/double(xcells);
-    long double y_space =  (double(ydim)-double(2*a*R))/double(ycells);
+    long double y_space =  (double(ydim)-double(a*R))/double(ycells);
     long double z_space = (double(zdim)-double(2*a*R))/double(zcells);
     //long double y_space= 2*1.3*a*R;
     cout<< x_space<<endl;
@@ -188,19 +191,19 @@ int main(){
 
     for(int t =0;t<int(tStop/dt);t++){
         
-        if(t<int(CPD_time/dt)){
+        /*if(t<int(CPD_time/dt)){
             
-            Dc = .00001*pow(10,-6);;
+            Dc = .1;
             K= 2.2*pow(10,-9);
             delc = 1.05*2*a*R; //um
             
         } else{
             
-            Dc = .000005*pow(10,-6);
+            Dc = .01;
             K= 2.2*pow(10,-8);
             delc = 1.4*2*a*R; //um
             
-        }
+        }*/
         
         cout <<t<<endl;
 
@@ -234,7 +237,7 @@ int main(){
                         float xij = a*(cells[ai][3]+cells[aj][3]) - pow(dist,.5);
                         //int sign = -xij/abs(xij);
 
-                        float fij =K*xij*tanh(s_b*abs(xij));
+                        float fij =Kc*xij*tanh(s_b*abs(xij));
 
                         for(int c=0; c<3;c++){
                             forces[ai][c] += fij *(( cells[ai][c]-cells[aj][c]) /pow(dist,.5));
@@ -251,7 +254,7 @@ int main(){
                 if((ai==aj)&&(t>int(CPD_time/dt))){
                     if(cells[i][2]<delca){
                         float xij = a*(cells[ai][3]) - cells[ai][2];
-                        float fij = K*xij*tanh(s_b*abs(xij));
+                        float fij = Ka*xij*tanh(s_b*abs(xij));
                         forces[ai][2] +=fij ;
                     }
 
@@ -297,37 +300,38 @@ int main(){
                     forces[i][1] = 0;
                     
 
-                }*/
+                }
                     
 
                 
-                if(((cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator) < R )||(cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator) + R>zdim ))&&(t<int(CPD_time/dt) )){
-                    //forces[i][2] = -forces[i][2];
-                    cells[i][2] = cells[i][2] - dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
+                if(((cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator) < R )||(cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator) + R>zdim )) ){
+                    forces[i][2] = -forces[i][2];
+                    //cells[i][2] = cells[i][2] - dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
                     //forces[i][2] = 0
                     
 
+                }*/
+                
+                
+                if(((cells[i][1] + dt*forces[i][1]/fric + pow(2*0*dt,.5)*distribution(generator) < a*R )||(cells[i][1] + dt*forces[i][1]/fric + pow(2*0*dt,.5)*distribution(generator) + a*R>ydim ) )){
+                    forces[i][1] = -forces[i][1];
+                    //forces[i][1] =0;
+
+                }
+                if(((cells[i][2] + dt*forces[i][1]/fric + pow(2*0*dt,.5)*distribution(generator) < a*R ) )){
+                    cells[i][2] = a*R+abs( dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator));
+                    //cells[i][2] = a*R;
+                    //forces[i][1] =0;
+
                 } else{
-                    
                     cells[i][2] = cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
                     
-                    
-                }
-                if(((cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) < a*R )||(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) + a*R>ydim ))&&(t<int(CPD_time/dt) )){
-                    forces[i][1] = -forces[i][1];
-                    //forces[i][1] =0;
-
                 }
 
                 
-                if(((cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) < a*R )||(cells[i][1] + dt*forces[i][1]/fric + pow(2*Dc*dt,.5)*distribution(generator) + a*R>ydim ))&&(t>int(CPD_time/dt) )){
-                    forces[i][1] = -forces[i][1];
-                    //forces[i][1] =0;
-
-                }
                 cells[i][0] = cells[i][0] + dt*forces[i][0]/fric + pow(2*0*dt,.5)*distribution(generator);
                 cells[i][1] = cells[i][1] + dt*forces[i][1]/fric + pow(2*0*dt,.5)*distribution(generator);
-                
+                //cells[i][2] = cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
                 //cells[i][2] = cells[i][2] + dt*forces[i][2]/fric + pow(2*Dc*dt,.5)*distribution(generator);
                 
                 
@@ -381,7 +385,7 @@ int main(){
 
         }
 
-        if (t == int(CPD_time/dt) ){
+        /*if (t == int(CPD_time/dt) ){
             if (CPD_flag==1){
 
                 for(int i = 0; i <cell_num; i++){
@@ -394,7 +398,7 @@ int main(){
 
             }
 
-        }
+        }*/
 
     }
 
